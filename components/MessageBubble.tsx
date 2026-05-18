@@ -3,15 +3,10 @@ import { Message } from '@/lib/api';
 export default function MessageBubble({ message }: { message: Message }) {
   if (!message.content && !message.sender) return null;
 
-  // Resolve display time: numeric ts → parse; fallback → rendered text from Zalo DOM
-  const timeStr = (() => {
-    const ts = Number(message.timestamp);
-    if (ts) {
-      const d = ts > 1e12 ? new Date(ts) : new Date(ts * 1000);
-      return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
-    }
-    return message.timeText || '';
-  })();
+  const ts = Number(message.timestamp);
+  const timeStr = ts
+    ? new Date(ts).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+    : '';
 
   const sender = message.fromMe ? 'Tôi' : (message.sender || '?');
 

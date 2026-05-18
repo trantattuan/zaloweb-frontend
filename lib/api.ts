@@ -12,7 +12,6 @@ export interface Message {
   content: string;
   sender: string;
   timestamp: string;
-  timeText?: string;
   fromMe: boolean;
 }
 
