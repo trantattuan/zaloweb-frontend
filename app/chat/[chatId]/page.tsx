@@ -42,8 +42,9 @@ export default function ChatPage() {
   const [loading, setLoading]   = useState(true);
   const [error, setError]       = useState('');
   const [input, setInput]       = useState('');
-  const [sending, setSending]   = useState(false);
-  const bottomRef               = useRef<HTMLDivElement>(null);
+  const [sending, setSending]     = useState(false);
+  const [sendError, setSendError] = useState('');
+  const bottomRef                 = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!chatId) return;
@@ -73,9 +74,15 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim() || sending) return;
     setSending(true);
-    try { await sendMessage(chatId, input.trim()); setInput(''); }
-    catch (err) { console.error('Send failed:', err); }
-    finally { setSending(false); }
+    setSendError('');
+    try {
+      await sendMessage(chatId, input.trim());
+      setInput('');
+    } catch (err) {
+      setSendError(err instanceof Error ? err.message : 'Gửi thất bại');
+    } finally {
+      setSending(false);
+    }
   }
 
   const groups = groupByDate(messages);
@@ -130,6 +137,11 @@ export default function ChatPage() {
       </div>
 
       {/* Send input */}
+      {sendError && (
+        <div className="px-4 py-1.5 bg-red-50 border-t border-red-100">
+          <p className="text-xs text-red-500">{sendError}</p>
+        </div>
+      )}
       <form
         onSubmit={handleSend}
         className="flex items-center gap-2 px-4 py-3 border-t border-gray-200 bg-white"
