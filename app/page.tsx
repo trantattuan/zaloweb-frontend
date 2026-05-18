@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import QRLogin from '@/components/QRLogin';
+import PhoneLogin from '@/components/PhoneLogin';
 import { fetchStatus } from '@/lib/api';
 
 export default function HomePage() {
@@ -25,5 +25,5 @@ export default function HomePage() {
     );
   }
 
-  return <QRLogin onLoggedIn={() => router.replace('/chat')} />;
+  return <PhoneLogin onLoggedIn={() => router.replace('/chat')} />;
 }
