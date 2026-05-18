@@ -18,7 +18,14 @@ export default function PhoneLogin({ onLoggedIn }: { onLoggedIn: (username: stri
   const [mode, setMode]         = useState<Mode>('form');
   const [error, setError]       = useState<string | null>(null);
   const [screenshot, setScreenshot] = useState<Screenshot | null>(null);
-  const imgRef = useRef<HTMLImageElement>(null);
+  const imgRef      = useRef<HTMLImageElement>(null);
+  const streamRef   = useRef<HTMLDivElement>(null);
+
+  const SPECIAL_KEYS = new Set([
+    'Enter','Backspace','Tab','Escape','Delete',
+    'ArrowLeft','ArrowRight','ArrowUp','ArrowDown',
+    'Home','End',
+  ]);
 
   useEffect(() => {
     const socket = getSocket();
@@ -59,6 +66,7 @@ export default function PhoneLogin({ onLoggedIn }: { onLoggedIn: (username: stri
   // Click trên ảnh → tính tọa độ gốc → emit page_click
   function handleImageClick(e: React.MouseEvent<HTMLImageElement>) {
     if (!screenshot || !imgRef.current) return;
+    streamRef.current?.focus();
     const rect = imgRef.current.getBoundingClientRect();
     const scaleX = screenshot.width  / rect.width;
     const scaleY = screenshot.height / rect.height;
@@ -67,24 +75,48 @@ export default function PhoneLogin({ onLoggedIn }: { onLoggedIn: (username: stri
     getSocket().emit('page_click', { x, y });
   }
 
+  // Phím bấm trong streaming view → forward về Playwright
+  function handleKeyDown(e: React.KeyboardEvent) {
+    if (SPECIAL_KEYS.has(e.key)) {
+      e.preventDefault();
+      getSocket().emit('page_key', { key: e.key });
+    } else if (e.key.length === 1) {
+      getSocket().emit('page_type', { text: e.key });
+    }
+  }
+
   if (mode === 'streaming') {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 gap-3 p-4">
         <div className="text-white text-sm font-medium">
-          Điều khiển trình duyệt — click vào ảnh để tương tác (giải CAPTCHA...)
+          Click vào ảnh để tương tác · Gõ phím để nhập text vào browser
         </div>
-        {screenshot ? (
-          <img
-            ref={imgRef}
-            src={screenshot.image}
-            alt="Browser"
-            onClick={handleImageClick}
-            className="rounded-xl border border-gray-600 cursor-crosshair max-w-full"
-            style={{ maxHeight: '80vh', objectFit: 'contain' }}
-          />
-        ) : (
-          <div className="text-gray-400 text-sm">Đang tải browser...</div>
-        )}
+        <p className="text-gray-400 text-xs">
+          Bước 1: Click nút <span className="bg-gray-700 text-white px-1 rounded">≡</span> góc phải card đăng nhập →
+          Bước 2: Chọn "Đăng nhập bằng SĐT" →
+          Bước 3: Click vào ô nhập, gõ thông tin
+        </p>
+        <div
+          ref={streamRef}
+          tabIndex={0}
+          onKeyDown={handleKeyDown}
+          className="outline-none focus:ring-2 focus:ring-blue-500 rounded-xl"
+        >
+          {screenshot ? (
+            <img
+              ref={imgRef}
+              src={screenshot.image}
+              alt="Browser"
+              onClick={handleImageClick}
+              className="rounded-xl border border-gray-600 cursor-crosshair max-w-full"
+              style={{ maxHeight: '80vh', objectFit: 'contain' }}
+            />
+          ) : (
+            <div className="w-96 h-64 flex items-center justify-center text-gray-400 text-sm">
+              Đang tải browser...
+            </div>
+          )}
+        </div>
         <button
           onClick={() => { setMode('form'); setError(null); }}
           className="text-gray-400 text-xs underline hover:text-white"
