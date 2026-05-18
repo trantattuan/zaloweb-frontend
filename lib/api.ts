@@ -15,10 +15,18 @@ export interface Message {
   fromMe: boolean;
 }
 
-export async function fetchChats(): Promise<Chat[]> {
+let _chatsCache: Chat[] | null = null;
+
+export async function fetchChats(force = false): Promise<Chat[]> {
+  if (_chatsCache && !force) return _chatsCache;
   const res = await fetch(`${BASE}/api/chats`);
   if (!res.ok) throw new Error('Failed to fetch chats');
-  return res.json();
+  _chatsCache = await res.json();
+  return _chatsCache!;
+}
+
+export function updateChatsCache(updater: (prev: Chat[]) => Chat[]) {
+  if (_chatsCache) _chatsCache = updater(_chatsCache);
 }
 
 export async function fetchMessages(chatId: string): Promise<Message[]> {
