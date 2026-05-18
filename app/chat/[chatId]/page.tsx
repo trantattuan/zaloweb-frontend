@@ -9,20 +9,32 @@ export default function ChatPage() {
   const { chatId } = useParams<{ chatId: string }>();
   const [chatName, setChatName]   = useState('');
   const [messages, setMessages]   = useState<Message[]>([]);
+  const [loading, setLoading]     = useState(true);
+  const [error, setError]         = useState('');
   const [input, setInput]         = useState('');
   const [sending, setSending]     = useState(false);
   const bottomRef                  = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!chatId) return;
+    setMessages([]);
+    setError('');
+    setLoading(true);
 
-    // Resolve chat name from cached list
     fetchChats().then(chats => {
       const match = chats.find(c => c.id === chatId);
       if (match) setChatName(match.name);
     }).catch(() => {});
 
-    fetchMessages(chatId).then(setMessages).catch(console.error);
+    fetchMessages(chatId)
+      .then(msgs => {
+        setMessages(msgs);
+        setLoading(false);
+      })
+      .catch(err => {
+        setError('Không tải được tin nhắn — ' + err.message);
+        setLoading(false);
+      });
 
     const socket = getSocket();
     socket.on('new_message', (msg: Message) => {
@@ -51,7 +63,7 @@ export default function ChatPage() {
 
   return (
     <div className="flex flex-col h-screen">
-      {/* Header — tên hội thoại */}
+      {/* Header */}
       <div className="flex items-center gap-3 px-5 py-3 border-b border-gray-200 bg-white shadow-sm flex-shrink-0">
         <div className="w-9 h-9 rounded-full bg-blue-200 flex items-center justify-center text-blue-700 font-bold text-sm">
           {chatName ? chatName[0] : '?'}
@@ -61,8 +73,23 @@ export default function ChatPage() {
         </span>
       </div>
 
-      {/* Message list */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-1">
+      {/* Message area */}
+      <div className="flex-1 overflow-y-auto p-3 space-y-0.5">
+        {loading && (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-400 text-sm">Đang tải tin nhắn...</p>
+          </div>
+        )}
+        {!loading && error && (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-red-400 text-sm">{error}</p>
+          </div>
+        )}
+        {!loading && !error && messages.length === 0 && (
+          <div className="flex items-center justify-center h-full">
+            <p className="text-gray-400 text-sm">Chưa có tin nhắn</p>
+          </div>
+        )}
         {messages.map(msg => (
           <MessageBubble key={msg.id} message={msg} />
         ))}

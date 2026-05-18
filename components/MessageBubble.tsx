@@ -1,28 +1,34 @@
 import { Message } from '@/lib/api';
 
 export default function MessageBubble({ message }: { message: Message }) {
-  const isMe = message.fromMe;
+  if (!message.content && !message.sender) return null;
+
+  const timeStr = message.timestamp
+    ? new Date(Number(message.timestamp)).toLocaleTimeString('vi-VN', {
+        hour: '2-digit',
+        minute: '2-digit',
+      })
+    : '';
+
+  const sender = message.fromMe ? 'Tôi' : (message.sender || '?');
+
   return (
-    <div className={`flex ${isMe ? 'justify-end' : 'justify-start'} mb-2`}>
-      <div
-        className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl text-sm break-words ${
-          isMe
-            ? 'bg-blue-500 text-white rounded-br-sm'
-            : 'bg-gray-100 text-gray-800 rounded-bl-sm'
-        }`}
-      >
-        {!isMe && (
-          <div className="text-xs font-semibold text-blue-600 mb-1">{message.sender}</div>
-        )}
-        <p>{message.content}</p>
-        {message.timestamp && (
-          <div className={`text-xs mt-1 ${isMe ? 'text-blue-100' : 'text-gray-400'}`}>
-            {new Date(Number(message.timestamp)).toLocaleTimeString('vi-VN', {
-              hour: '2-digit', minute: '2-digit',
-            })}
-          </div>
-        )}
-      </div>
+    <div className={`flex items-baseline gap-1.5 py-1.5 px-3 rounded-lg text-sm leading-relaxed ${
+      message.fromMe ? 'bg-blue-50' : 'bg-white'
+    }`}>
+      <span className={`font-semibold shrink-0 ${message.fromMe ? 'text-blue-600' : 'text-gray-800'}`}>
+        {sender}
+      </span>
+      <span className="text-gray-300 shrink-0">:</span>
+      {timeStr && (
+        <>
+          <span className="text-gray-400 shrink-0 text-xs tabular-nums">{timeStr}</span>
+          <span className="text-gray-300 shrink-0">:</span>
+        </>
+      )}
+      <span className={`break-words min-w-0 ${message.fromMe ? 'text-blue-700' : 'text-gray-700'}`}>
+        {message.content || '[hình ảnh / sticker]'}
+      </span>
     </div>
   );
 }
