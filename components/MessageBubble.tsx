@@ -3,8 +3,9 @@ import { Message } from '@/lib/api';
 export default function MessageBubble({ message }: { message: Message }) {
   if (!message.content && !message.sender) return null;
 
-  const timeStr = message.timestamp
-    ? new Date(Number(message.timestamp)).toLocaleTimeString('vi-VN', {
+  const ts = Number(message.timestamp);
+  const timeStr = ts
+    ? (ts > 1e12 ? new Date(ts) : new Date(ts * 1000)).toLocaleTimeString('vi-VN', {
         hour: '2-digit',
         minute: '2-digit',
       })
